@@ -1,114 +1,76 @@
 {
   "profile": {
     "chineseName": "刘勇杰",
-    "englishName": "Zhang Mingyuan",
-    "title": "Product Designer & Visual Artist",
-    "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop",
-    "issueNumber": "ISSUE 01 / 2024",
+    "englishName": "Liu Yongjie",
+    "title": "运营专员/助理",
+    "avatar": "https://res.cloudinary.com/vljhnkvn/image/upload/f_outo,q_quto/v1787264787/screenshot-20260821-062515.jpg",
+    "issueNumber": "ISSUE 01 / 2026",
     "contacts": [
-      { "type": "link", "label": "500px.com/zhangming", "url": "#" },
-      { "type": "text", "label": "WeChat: zhang_design" },
-      { "type": "email", "label": "zhang@example.com" }
+      { "type": "link", "label": "500px", "url": "https://500px.com.cn/community/user-details/f8a94c0284797ad15949efa30b8103929?" },
+      { "type": "text", "label": "WeChat: mwrsxtn9imagine" },
+      { "type": "email", "label": "nihil_4lie@163.com" }
     ]
   },
   "portals": [
-    { "name": "个人站", "en": "Portfolio Site", "url": "#", "image": "" },
-    { "name": "摄影站", "en": "Photography", "url": "#", "image": "" },
-    { "name": "公众号", "en": "WeChat Official", "url": "#", "image": "" },
-    { "name": "Behance", "en": "Creative Platform", "url": "#", "image": "" }
+    { "name": "个人站", "en": "Portfolio Site", "url": "https://hh5646838.github.io/", "image": "" },
+    { "name": "摄影站", "en": "Photography", "url": "https://hh5646838.github.io/Photography/", "image": "" },
+    { "name": "音乐收藏", "en": "WeChat Official", "url": "https://hh5646838.github.io/JoJo/", "image": "" },
+    { "name": "公众号", "en": "Creative Platform", "url": "https://hh5646838.github.io/jojocollection/", "image": "" }
   ],
   "education": {
-    "logo": "",
+    "logo": "https://res.cloudinary.com/vljhnkvn/image/upload/v1787260860/log_metool_1.png",
     "nameCn": "成都理工大学",
     "nameEn": "Chengdu University of Technology",
     "description": "国家\"双一流\"建设高校",
     "tags": ["双一流", "本科", "城乡规划"],
     "pageNumber": "Page 02"
-  },
   "skills": [
-    { "name": "Figma / Sketch", "level": 95 },
-    { "name": "Adobe Creative Suite", "level": 90 },
-    { "name": "UI/UX Design", "level": 92 },
-    { "name": "User Research", "level": 85 }
+    { "name": "PS / 剪映", "level": 80 },
+    { "name": "SU / CAD", "level": 90 },
+    { "name": "主流AI平台", "level": 85 },
+    { "name": "摄影 / 照明设计", "level": 80 }
   ],
   "workExperience": [
     {
-      "title": "Senior UI Designer",
-      "company": "某知名互联网公司",
-      "period": "2021 - Present",
-      "description": "负责核心产品界面设计与用户体验优化，主导设计系统搭建"
+      "title": "助理照明设计师",
+      "company": "成都福玻斯照明设计有限公司",
+      "period": "2025.04 - 2026.04",
+      "description": "负责室内灯光效果图渲染，协助完成设计方案；负责图纸深化及表单制作；负责制作照度书、物料表。"
     },
     {
-      "title": "UI Designer",
-      "company": "创意设计公司",
-      "period": "2018 - 2021",
-      "description": "参与多个品牌数字化项目，独立完成移动端应用界面设计"
+      "title": "城乡规划师",
+      "company": "成都蚂蚁蓝图科技有限公司",
+      "period": "2023.10 - 2024.03",
+      "description": "负责GIS出图和用地数据统计；负责村级片区国土空间规划汇报ppt制作；参与村庄实地调研及前期分析。"
     }
   ],
   "projects": [
     {
-      "title": "E-commerce Platform Redesign",
-      "period": "Jan 2022 - Jun 2022",
-      "description": "主导电商平台全面改版，优化购物流程与视觉体系，转化率提升35%，用户停留时长增加28%"
-    },
-    {
-      "title": "Financial App Design System",
-      "period": "Mar 2021 - Dec 2021",
-      "description": "从0到1构建金融App设计系统，统一12个产品线视觉规范，开发效率提升50%"
-    },
-    {
-      "title": "Smart Home Control Panel",
-      "period": "Sep 2020 - Feb 2021",
-      "description": "设计智能家居控制面板界面，获红点设计奖提名，用户满意度评分4.8/5.0"
+      "title": "万华海口F酒店室内照明设计",
+      "period": "2025.08 - 2026.02",
+      "description": "独立完成海口F酒店客房的照明设计方案，图纸，物料表。"
     }
   ],
   "awards": [
     {
-      "image": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=400&fit=crop",
-      "badge": "2023",
-      "name": "Red Dot Award",
+      "image": "",
+      "badge": "548分",
+      "name": "大学英语四级 (CET4)",
       "aspect": "square"
     },
     {
-      "image": "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=400&h=500&fit=crop",
-      "badge": "Gold",
-      "name": "iF Design Award",
-      "aspect": "portrait"
-    },
-    {
-      "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
-      "badge": "2022",
-      "name": "A' Design Award",
-      "aspect": "square"
-    },
-    {
-      "image": "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=500&fit=crop",
-      "badge": "Winner",
-      "name": "Good Design Award",
+      "image": "",
+      "badge": "C1",
+      "name": "驾驶证",
       "aspect": "portrait"
     }
   ],
-  "papers": [
-    {
-      "title": "基于用户体验的城市公共空间设计研究",
-      "url": "#",
-      "journal": "《城市规划学刊》",
-      "type": "核心期刊",
-      "date": "June 2020"
-    },
-    {
-      "title": "数字化时代下的交互设计范式转变",
-      "url": "#",
-      "journal": "《装饰》杂志",
-      "type": "CSSCI",
-      "date": "March 2019"
-    }
-  ],
+  "papers": [],
   "contact": {
-    "tel": "+86 138 0000 0000",
-    "email": "zhang@example.com",
-    "wechat": "zhang_design",
-    "address": "四川省成都市成华区二仙桥东三路1号",
-    "copyright": "© 2024 Zhang Mingyuan. All rights reserved."
+    "tel": "-",
+    "email": "nihil_4lie@163.com",
+    "wechat": "mwrsxtn9imagine",
+    "address": "成都",
+    "copyright": "© 2026 Yongjie Liu. All rights reserved."
   }
 }
