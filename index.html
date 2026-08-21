@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人简历与作品集</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // 加载配置数据并渲染页面
+    async function init() {
+      try {
+        const response = await fetch('config.json');
+        const config = await response.json();
+        if (config.site && config.site.title) {
+          document.title = config.site.title;
+        }
+        if (config.site && config.site.tagline) {
+          let meta = document.querySelector('meta[name="description"]');
+          if (!meta) {
+            meta = document.createElement('meta');
+            meta.name = 'description';
+            document.head.appendChild(meta);
+          }
+          meta.content = config.site.tagline;
+        }
+        renderPage(config);
+      } catch (error) {
+        console.error('Failed to load config.json:', error);
+        document.getElementById('app').innerHTML = '<p style="text-align:center;padding:40px;">加载数据失败，请确保 config.json 文件存在</p>';
+      }
+    }
+
+    function renderPage(config) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        ${renderHeader(config.profile)}
+        ${renderPortals(config.portals)}
+        ${renderEducation(config.education)}
+        ${renderSkills(config.skills)}
+        ${renderWorkExperience(config.workExperience)}
+        ${renderProjects(config.projects)}
+        ${renderAwards(config.awards)}
+        ${renderPapers(config.papers)}
+        ${renderContact(config.contact)}
+      `;
+    }
+
+    function renderHeader(profile) {
+      return `
+        <header class="max-w-6xl px-8 py-20 md:py-32" style="margin-left:auto;margin-right:auto;">
+          <div class="flex flex-col md:flex-row items-start gap-12 mb-12">
+            <div class="flex-shrink-0 flex flex-col items-center">
+              <div class="w-32 h-32 rounded-full overflow-hidden">
+                <img src="${profile.avatar}" alt="头像" class="w-full h-full object-cover grayscale">
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="page-number mb-4">${profile.issueNumber}</p>
+              <h1 class="font-didot text-6xl md:text-8xl italic font-bold mb-4 tracking-tight">${profile.englishName}</h1>
+              <p class="text-xs uppercase tracking-widest mb-8">${profile.title}</p>
+              <div class="contacts-list flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                ${profile.contacts.map(c => {
+                  const icon = getContactIcon(c.type);
+                  if (c.type === 'link') return `<a href="${c.url}" class="contact-item hover:text-red transition-colors">${icon}<span>${c.label}</span></a>`;
+                  if (c.type === 'email') return `<span class="contact-item contact-email">${icon}<span>${c.label}</span></span>`;
+                  return `<span class="contact-item">${icon}<span>${c.label}</span></span>`;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    function getContactIcon(type) {
+      const size = 14;
+      if (type === 'link') {
+        return `<svg class="contact-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
+      }
+      if (type === 'email') {
+        return `<svg class="contact-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>`;
+      }
+      // 默认：微信/聊天
+      return `<svg class="contact-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+    }
+
+    function renderPortals(portals) {
+      return `
+        <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Personal Portals <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">个人主页</span></p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            ${portals.map(p => `
+              <a href="${p.url}" class="group block">
+                <div class="aspect-square bg-gray-100 mb-3 group-hover:bg-gray-200 transition-colors" style="${p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : ''}"></div>
+                <p class="text-sm font-medium">${p.name}</p>
+                <p class="text-xs text-gray-400 mt-1">${p.en}</p>
+              </a>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderEducation(edu) {
+      return `
+        <section class="max-w-6xl px-8 py-16" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Education <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">教育经历</span></p>
+          <div class="magazine-quote max-w-3xl">
+            <div class="flex items-start gap-6">
+              <div class="w-24 h-24 flex-shrink-0 flex items-center justify-center" style="${edu.logo ? `background-image:url('${edu.logo}');background-size:contain;background-repeat:no-repeat;background-position:center;` : ''}"></div>
+              <div>
+                <h3 class="font-didot text-2xl font-semibold mb-1">${edu.nameCn}</h3>
+                <p class="text-sm italic mb-1">${edu.nameEn}</p>
+                <p class="text-xs text-gray-500 mb-3">${edu.description}</p>
+                <div class="flex gap-2">
+                  ${edu.tags.map(t => `<span class="px-2 py-1 border border-gray-300 text-xs">${t}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+            <p class="page-number mt-4 text-right">${edu.pageNumber}</p>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderSkills(skills) {
+      return `
+        <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Expertise <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">技能专长</span></p>
+          <div class="space-y-6" style="max-width:42rem;">
+            ${skills.map(s => `
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>${s.name}</span>
+                  <span class="font-didot italic">${s.level}%</span>
+                </div>
+                <div class="skill-line"><div class="skill-fill" style="width:${s.level}%"></div></div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderWorkExperience(experiences) {
+      return `
+        <section class="max-w-6xl px-8 py-16" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Career Path <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">工作经历</span></p>
+          <div class="timeline-dotted space-y-10" style="max-width:48rem;">
+            ${experiences.map(exp => `
+              <div class="relative">
+                <div class="timeline-dot"></div>
+                <div>
+                  <h3 class="font-didot text-xl font-semibold mb-1">${exp.title}</h3>
+                  <p class="text-sm text-gray-500 mb-2">${exp.company} · ${exp.period}</p>
+                  <p class="text-sm">${exp.description}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderProjects(projects) {
+      return `
+        <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Selected Works <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">项目经历</span></p>
+          <div class="space-y-8" style="max-width:48rem;">
+            ${projects.map(p => `
+              <div class="border-l-2 border-red pl-6">
+                <h3 class="font-didot text-lg font-semibold mb-1">${p.title}</h3>
+                <p class="text-xs text-gray-500 mb-2">${p.period}</p>
+                <p class="text-sm">${p.description}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderAwards(awards) {
+      return `
+        <section class="max-w-6xl px-8 py-16" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Recognition <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">获奖荣誉</span></p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            ${awards.map(a => `
+              <div class="relative">
+                <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover">
+                <span class="award-badge">${a.badge}</span>
+                <p class="text-xs mt-3 text-center font-medium">${a.name}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderPapers(papers) {
+      return `
+        <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Publications <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">学术论文</span></p>
+          <div class="space-y-6" style="max-width:48rem;">
+            ${papers.map(p => `
+              <div class="border-l-2 border-red pl-4">
+                <a href="${p.url}" class="font-didot text-lg font-medium hover:text-red transition-colors">${p.title}</a>
+                <p class="text-sm text-gray-500 mt-1">${p.journal} · ${p.type} · ${p.date}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderContact(contact) {
+      return `
+        <section class="max-w-6xl px-8 py-20 border-t border-gray-200 mt-12" style="margin-left:auto;margin-right:auto;">
+          <p class="section-label mb-8">Get in Touch <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">联系方式</span></p>
+          <div class="space-y-2 text-sm">
+            <p><span class="font-medium">Tel:</span> ${contact.tel}</p>
+            <p><span class="font-medium">Email:</span> ${contact.email}</p>
+            <p><span class="font-medium">WeChat:</span> ${contact.wechat}</p>
+            <p><span class="font-medium">Address:</span> ${contact.address}</p>
+          </div>
+          <p class="page-number mt-12 text-center">${contact.copyright}</p>
+        </section>
+      `;
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
