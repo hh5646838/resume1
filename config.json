@@ -16,10 +16,10 @@
     ]
   },
   "portals": [
-    { "name": "个人站", "en": "Portfolio Site", "url": "https://hh5646838.github.io/", "image": "" },
+    { "name": "个人站", "en": "Portfolio Site", "url": "https://hh5646838.github.io/", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787308174/Weixin_Image_20260821182550_2638_2.jpg" },
     { "name": "摄影站", "en": "Photography", "url": "https://hh5646838.github.io/Photography/", "image": "" },
-    { "name": "音乐收藏", "en": "WeChat Official", "url": "https://hh5646838.github.io/JoJo/", "image": "" },
-    { "name": "公众号", "en": "Creative Platform", "url": "https://hh5646838.github.io/jojocollection/", "image": "" }
+    { "name": "音乐收藏", "en": "WeChat Official", "url": "https://hh5646838.github.io/jojocollection/", "image": "" },
+    { "name": "公众号", "en": "Creative Platform", "url": "https://hh5646838.github.io/JoJo/", "image": "" }
   ],
   "education": {
     "logo": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787260860/log_metool_1.png",
