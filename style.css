@@ -154,6 +154,23 @@ a {
   filter: grayscale(0%);
 }
 
+/* 个人主页图片黑白滤镜 */
+.bw-portal {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.bw-portal:hover {
+  filter: grayscale(0%);
+}
+
+/* 手机端个人主页默认彩色 */
+@media (max-width: 768px) {
+  .bw-portal {
+    filter: grayscale(0%);
+  }
+}
+
 /* 章节标签 */
 .section-label {
   font-size: 11px;

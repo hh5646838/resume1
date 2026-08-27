@@ -5,7 +5,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
+  <style>
+    .lightbox-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      cursor: zoom-out;
+    }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-overlay img {
+      max-width: 92vw;
+      max-height: 92vh;
+      object-fit: contain;
+      box-shadow: 0 4px 60px rgba(0,0,0,0.6);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 18px; right: 28px;
+      color: #fff;
+      font-size: 42px;
+      font-weight: 300;
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+    .lightbox-caption {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-size: 14px;
+      opacity: 0.8;
+      text-align: center;
+      max-width: 80vw;
+    }
+    .award-clickable { cursor: zoom-in; transition: filter 0.2s; }
+    .award-clickable:hover { filter: brightness(1.05); }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -14,7 +60,7 @@
     // 加载配置数据并渲染页面
     async function init() {
       try {
-        const response = await fetch('config.json');
+        const response = await fetch('config.json?v=2');
         const config = await response.json();
         if (config.site && config.site.title) {
           document.title = config.site.title;
@@ -96,7 +142,7 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             ${portals.map(p => `
               <a href="${p.url}" class="group block">
-                <div class="aspect-square bg-gray-100 mb-3 group-hover:bg-gray-200 transition-colors" style="${p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : ''}"></div>
+                <div class="bw-portal aspect-square bg-gray-100 mb-3 group-hover:bg-gray-200 transition-colors" style="${p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : ''}"></div>
                 <p class="text-sm font-medium">${p.name}</p>
                 <p class="text-xs text-gray-400 mt-1">${p.en}</p>
               </a>
@@ -191,7 +237,11 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             ${awards.map(a => `
               <div class="relative">
-                <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover">
+                ${a.image ? `
+                  <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover award-clickable" onclick="openLightbox('${a.image}', '${a.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">
+                ` : `
+                  <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover">
+                `}
                 <span class="award-badge">${a.badge}</span>
                 <p class="text-xs mt-3 text-center font-medium">${a.name}</p>
               </div>
@@ -202,13 +252,14 @@
     }
 
     function renderPapers(papers) {
+      const externalIcon = `<svg class="inline-block ml-1 align-middle opacity-60" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
       return `
         <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
           <p class="section-label mb-8">Publications <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">学术论文</span></p>
           <div class="space-y-6" style="max-width:48rem;">
             ${papers.map(p => `
               <div class="border-l-2 border-red pl-4">
-                <a href="${p.url}" class="font-didot text-lg font-medium hover:text-red transition-colors">${p.title}</a>
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="font-didot text-lg font-medium hover:text-red transition-colors">${p.title}${externalIcon}</a>
                 <p class="text-sm text-gray-500 mt-1">${p.journal} · ${p.type} · ${p.date}</p>
               </div>
             `).join('')}
@@ -232,8 +283,32 @@
       `;
     }
 
+    // Lightbox 大图查看
+    function openLightbox(src, caption) {
+      const overlay = document.getElementById('lightboxOverlay');
+      const img = overlay.querySelector('img');
+      const cap = overlay.querySelector('.lightbox-caption');
+      img.src = src;
+      cap.textContent = caption || '';
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      document.getElementById('lightboxOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', init);
   </script>
+
+  <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img src="" alt="" onclick="event.stopPropagation()">
+    <p class="lightbox-caption"></p>
+  </div>
 </body>
 </html>
