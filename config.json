@@ -17,7 +17,7 @@
   },
   "portals": [
     { "name": "个人站", "en": "Portfolio Site", "url": "https://hh5646838.github.io/", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787308174/Weixin_Image_20260821182550_2638_2.jpg" },
-    { "name": "AI工具站", "en": "AI Tools", "url": "https://www.jojocharm.top", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/w_300,f_auto,q_auto/v1787826314/Gemini_Generated_Image_25ux7h25ux7h25ux_compressed.jpg" },
+    { "name": "AI工具站", "en": "AI Tools", "url": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787053936/samples/zoom.avif" },
     { "name": "摄影站", "en": "Photography", "url": "https://hh5646838.github.io/Photography/", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787826741/833fc58a-5027-4940-8478-52e2bfb7563a.png" }
   ],
   "education": {
@@ -29,10 +29,10 @@
     "pageNumber": "Page 02"
   },
   "skills": [
+    { "name": "主流AI 平台", "level": 85 },
     { "name": "PS / 剪映", "level": 80 },
-    { "name": "SU / CAD", "level": 90 },
-    { "name": "主流AI平台", "level": 85 },
-    { "name": "摄影 / 照明设计", "level": 80 }
+    { "name": "SU / CAD / 渲染", "level": 90 },
+    { "name": "摄影 / 设计", "level": 80 }
   ],
   "workExperience": [
     {
