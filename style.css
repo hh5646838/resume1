@@ -28,6 +28,7 @@ body {
   font-size: 17px;
   line-height: 1.8;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
 }
 a {
   color: inherit;
@@ -102,7 +103,7 @@ a {
 
 /* 技能条样式 */
 .skill-line {
-  height: 1px;
+  height: 2px;
   background: #e0e0e0;
   position: relative;
 }
@@ -110,7 +111,8 @@ a {
 .skill-fill {
   height: 100%;
   background: var(--black);
-  transition: width 0.8s ease;
+  width: 0;
+  transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease;
 }
 
 /* 时间轴样式 */
@@ -154,14 +156,27 @@ a {
   filter: grayscale(0%);
 }
 
-/* 个人主页图片黑白滤镜 */
+/* 个人主页图片黑白滤镜 + 悬浮效果 */
 .bw-portal {
   filter: grayscale(100%);
-  transition: filter 0.3s ease;
+  transition: transform 0.28s ease, filter 0.3s ease, box-shadow 0.28s ease, background-color 0.25s ease;
 }
 
 .bw-portal:hover {
   filter: grayscale(0%);
+}
+
+/* 桌面端：明显的悬浮反馈（与窗口宽度无关，窄屏也生效） */
+@media (hover: hover) {
+  .portal-link { position: relative; }
+  .portal-link:hover .bw-portal {
+    filter: grayscale(0%);
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+  }
+  .portal-link:hover .portal-name {
+    color: var(--red);
+  }
 }
 
 /* 手机端个人主页默认彩色 */
@@ -560,4 +575,77 @@ a {
   margin-right: auto;
   padding-left: 2rem;
   padding-right: 2rem;
+}
+
+/* ========================================================
+   新增交互样式
+   ======================================================== */
+
+/* 1) 极简「回到文首」按钮 */
+.back-to-top {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1px solid var(--gray-300);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(14px) scale(0.9);
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 0.3s ease, transform 0.3s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.back-to-top svg { width: 18px; height: 18px; }
+.back-to-top.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.back-to-top:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+.back-to-top:active { transform: scale(0.92); }
+
+/* 2) 技能专长：鼠标悬浮变色 */
+.skill-row {
+  padding: 4px 0;
+  transition: color 0.25s ease;
+}
+.skill-row:hover .skill-fill { background: var(--red); }
+.skill-row:hover .skill-name,
+.skill-row:hover .skill-num { color: var(--red); }
+
+/* 3) 手机手指触碰微动效（仅触摸设备） */
+* { -webkit-tap-highlight-color: transparent; }
+
+.portal-link,
+.edu-link,
+.contact-item,
+.award-clickable,
+.skill-row {
+  transition: transform 0.15s ease, filter 0.3s ease, color 0.25s ease;
+}
+
+@media (hover: none) {
+  .portal-link:active,
+  .edu-link:active,
+  .contact-item:active,
+  .award-clickable:active,
+  .bw-portal:active,
+  .skill-row:active,
+  .back-to-top:active {
+    transform: scale(0.96);
+    filter: brightness(0.94);
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
 }

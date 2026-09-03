@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
   <style>
     .lightbox-overlay {
       display: none;
@@ -56,11 +56,15 @@
 <body>
   <div id="app"></div>
 
+  <button id="backToTop" class="back-to-top" aria-label="回到文首">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 14 12 8 18 14"></polyline></svg>
+  </button>
+
   <script>
     // 加载配置数据并渲染页面
     async function init() {
       try {
-        const response = await fetch('config.json?v=2');
+        const response = await fetch('config.json?v=3');
         const config = await response.json();
         if (config.site && config.site.title) {
           document.title = config.site.title;
@@ -94,6 +98,141 @@
         ${renderPapers(config.papers)}
         ${renderContact(config.contact)}
       `;
+      initInteractions();
+    }
+
+    /* ===================== 交互逻辑 ===================== */
+
+    // 初始化所有页面交互
+    function initInteractions() {
+      setupSkillAnimation();
+      setupBackToTop();
+      setupRubberBand();
+    }
+
+    // 技能专长：滚动进入视口时进度条从 0 到目标、数字从 0 涨到目标
+    function setupSkillAnimation() {
+      const sec = document.getElementById('skills-section');
+      if (!sec) return;
+      const rows = sec.querySelectorAll('.skill-row');
+
+      // 无 IntersectionObserver 时直接落位，避免进度条卡在 0
+      if (!('IntersectionObserver' in window)) {
+        rows.forEach(row => {
+          const lv = +row.dataset.level || 0;
+          row.querySelector('.skill-fill').style.width = lv + '%';
+          row.querySelector('.skill-num').textContent = lv;
+        });
+        return;
+      }
+
+      let done = false;
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(en => {
+          if (en.isIntersecting && !done) {
+            done = true;
+            rows.forEach((row, i) => animateSkillRow(row, i));
+            io.disconnect();
+          }
+        });
+      }, { threshold: 0.35 });
+      io.observe(sec);
+    }
+
+    function animateSkillRow(row, index) {
+      const level = +row.dataset.level || 0;
+      const fill = row.querySelector('.skill-fill');
+      const num = row.querySelector('.skill-num');
+      const delay = index * 130;        // 逐项错峰，节奏更自然
+      const duration = 1100;            // 数字/进度统一时长，时间可控
+
+      // 进度条：延迟后由 CSS transition 平滑生长
+      setTimeout(() => { fill.style.width = level + '%'; }, delay);
+
+      // 数字：从 0 缓动涨到目标
+      let startTs = null;
+      function tick(ts) {
+        if (startTs === null) startTs = ts;
+        const elapsed = ts - startTs;
+        if (elapsed < delay) {
+          num.textContent = '0';
+          requestAnimationFrame(tick);
+          return;
+        }
+        const t = Math.min(1, (elapsed - delay) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        num.textContent = Math.round(eased * level);
+        if (t < 1) requestAnimationFrame(tick);
+        else num.textContent = level;
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // 极简「回到文首」按钮
+    function setupBackToTop() {
+      const btn = document.getElementById('backToTop');
+      if (!btn) return;
+      const onScroll = () => {
+        if (window.scrollY > 400) btn.classList.add('show');
+        else btn.classList.remove('show');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // 底部橡皮筋拉伸回弹（触屏在页面最底继续下拉时）
+    function setupRubberBand() {
+      const page = document.getElementById('app');
+      if (!page) return;
+
+      let startY = 0;
+      let pulling = false;
+      let rubber = 0;
+
+      const atBottom = () => {
+        const doc = document.documentElement;
+        return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 2);
+      };
+
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        startY = e.touches[0].clientY;
+        pulling = false;
+        rubber = 0;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length !== 1) return;
+        const delta = e.touches[0].clientY - startY;
+        // 仅在页面最底部且继续向下拉（手指下移）时触发橡皮筋
+        if (atBottom() && delta > 0) {
+          pulling = true;
+          rubber = delta * 0.38; // 阻力系数，拉伸手感更"韧"
+          page.style.transition = 'none';
+          page.style.transform = 'translateY(' + rubber + 'px)';
+          if (e.cancelable) e.preventDefault();
+        } else if (pulling) {
+          // 已处于拉伸中：手指回退时跟随收回，但不反向越过原位置
+          rubber = Math.max(0, delta) * 0.38;
+          page.style.transform = 'translateY(' + rubber + 'px)';
+          if (e.cancelable) e.preventDefault();
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', () => {
+        if (!pulling) return;
+        pulling = false;
+        // 弹性回弹：带轻微过冲的快速回弹
+        page.style.transition = 'transform 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        page.style.transform = 'translateY(0)';
+        setTimeout(() => {
+          page.style.transition = '';
+          page.style.transform = '';
+        }, 580);
+      });
     }
 
     function renderHeader(profile) {
@@ -141,9 +280,9 @@
           <p class="section-label mb-8">Personal Portals <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">个人主页</span></p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             ${portals.map(p => `
-              <a href="${p.url}" class="group block">
-                <div class="bw-portal aspect-square bg-gray-100 mb-3 group-hover:bg-gray-200 transition-colors" style="${p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : ''}"></div>
-                <p class="text-sm font-medium">${p.name}</p>
+              <a href="${p.url}" class="group block portal-link">
+                <div class="bw-portal aspect-square bg-gray-100 mb-3 group-hover:bg-gray-200" style="${p.image ? `background-image:url('${p.image}');background-size:cover;background-position:center;` : ''}"></div>
+                <p class="text-sm font-medium portal-name">${p.name}</p>
                 <p class="text-xs text-gray-400 mt-1">${p.en}</p>
               </a>
             `).join('')}
@@ -153,6 +292,9 @@
     }
 
     function renderEducation(edu) {
+      const eduName = edu.link
+        ? `<a href="${edu.link}" target="_blank" rel="noopener noreferrer" class="edu-link hover:text-red transition-colors">${edu.nameCn}</a>`
+        : edu.nameCn;
       return `
         <section class="max-w-6xl px-8 py-16" style="margin-left:auto;margin-right:auto;">
           <p class="section-label mb-8">Education <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">教育经历</span></p>
@@ -160,7 +302,7 @@
             <div class="flex items-start gap-6">
               <div class="w-24 h-24 flex-shrink-0 flex items-center justify-center" style="${edu.logo ? `background-image:url('${edu.logo}');background-size:contain;background-repeat:no-repeat;background-position:center;` : ''}"></div>
               <div>
-                <h3 class="font-didot text-2xl font-semibold mb-1">${edu.nameCn}</h3>
+                <h3 class="font-didot text-2xl font-semibold mb-1 edu-name-heading">${eduName}</h3>
                 <p class="text-sm italic mb-1">${edu.nameEn}</p>
                 <p class="text-xs text-gray-500 mb-3">${edu.description}</p>
                 <div class="flex gap-2">
@@ -176,16 +318,16 @@
 
     function renderSkills(skills) {
       return `
-        <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
+        <section id="skills-section" class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
           <p class="section-label mb-8">Expertise <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">技能专长</span></p>
           <div class="space-y-6" style="max-width:42rem;">
             ${skills.map(s => `
-              <div>
+              <div class="skill-row" data-level="${s.level}">
                 <div class="flex justify-between mb-2 text-sm">
-                  <span>${s.name}</span>
-                  <span class="font-didot italic">${s.level}%</span>
+                  <span class="skill-name">${s.name}</span>
+                  <span class="skill-num font-didot italic">0</span>
                 </div>
-                <div class="skill-line"><div class="skill-fill" style="width:${s.level}%"></div></div>
+                <div class="skill-line"><div class="skill-fill" style="width:0%"></div></div>
               </div>
             `).join('')}
           </div>
