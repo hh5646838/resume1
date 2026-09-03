@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <style>
     .lightbox-overlay {
       display: none;
@@ -206,69 +206,77 @@
       if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
 
       let startY = 0;
-      let startAtBottom = false; // 手势起始时是否在底部（只认起点一次）
+      let pullStartY = 0;        // 进入拉伸那一刻的手指 Y，橡皮筋从 0 平滑增长
       let pulling = false;       // 是否处于橡皮筋拉伸中
-      let released = false;      // 手指回退越过起点后释放，本段手势不再拦截
       let rubber = 0;
-      const MAX = 130;           // 最大拉伸像素，防止拉过头
+      const MAX = 170;           // 最大拉伸像素，防止拉过头
+      const COEF = 0.5;          // 阻力系数，越大越"跟手"
 
       const atBottom = () => {
         const doc = document.documentElement;
         return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 4);
       };
 
-      function release() {
+      // 松手回弹：带轻微过冲的弹性曲线，快速弹回
+      function snapBack() {
         if (!pulling) return;
         pulling = false;
-        page.style.transition = 'transform 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        page.style.transition = 'transform 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3)';
         page.style.transform = 'translateY(0)';
         setTimeout(() => {
           page.style.transition = '';
           page.style.transform = '';
-        }, 620);
+        }, 580);
       }
 
-      function reset() {
-        if (pulling) release();
+      // 强制取消拉伸（手指回退/离开底部/手势中断），交还原生滚动
+      function cancel() {
+        if (!pulling) return;
         pulling = false;
-        released = false;
-        rubber = 0;
-        page.style.transition = '';
+        page.style.transition = 'none';
         page.style.transform = '';
       }
 
       window.addEventListener('touchstart', (e) => {
         if (e.touches.length !== 1) return;
         startY = e.touches[0].clientY;
-        startAtBottom = atBottom();
         pulling = false;
-        released = false;
         rubber = 0;
+        pullStartY = 0;
       }, { passive: true });
 
       window.addEventListener('touchmove', (e) => {
-        if (e.touches.length !== 1 || released) return;
-        const delta = e.touches[0].clientY - startY;
+        if (e.touches.length !== 1) return;
+        const y = e.touches[0].clientY;
 
-        // 非「起点在底部」或「手指向上（想上滑）」：完全交还原生滚动，绝不拦截
-        if (!startAtBottom || delta <= 0) {
-          if (pulling) { reset(); }
+        if (pulling) {
+          const pull = y - pullStartY;
+          // 手指回退到起点之上，或已不在底部 → 立即释放，绝不拦截向上滑动
+          if (pull <= 0 || !atBottom()) { cancel(); return; }
+          rubber = Math.min(MAX, pull * COEF);
+          page.style.transition = 'none';
+          page.style.transform = 'translateY(' + rubber + 'px)';
+          if (e.cancelable) e.preventDefault();
           return;
         }
 
-        // 到这里：起点在底部 + 向下拉 → 进入橡皮筋拉伸
-        pulling = true;
-        rubber = Math.min(MAX, delta * 0.4); // 阻力系数，手感更"韧"
-        page.style.transition = 'none';
-        page.style.transform = 'translateY(' + rubber + 'px)';
-        if (e.cancelable) e.preventDefault();
+        // 尚未拉伸：滚动过程中「动态到达底部」且「手指向下拉过阈值」才激活
+        if (atBottom() && (y - startY) > 6) {
+          pulling = true;
+          pullStartY = y;
+          rubber = 0;
+          page.style.transition = 'none';
+          page.style.transform = 'translateY(0)';
+          if (e.cancelable) e.preventDefault();
+        }
+        // 其余情况完全交给原生滚动
       }, { passive: false });
 
-      // 结束与中断都兜底，避免 transform / pulling 残留导致页面卡死
-      window.addEventListener('touchend', release);
-      window.addEventListener('touchcancel', reset);
+      window.addEventListener('touchend', () => { if (pulling) snapBack(); });
+      window.addEventListener('touchcancel', () => { if (pulling) cancel(); });
     }
 
+    // 手机端：手指接触/滑动时，在触点留下一串彩色粒子拖尾（仅触屏，不挡交互）
     // 手机端：手指接触/滑动时，在触点留下一串彩色粒子拖尾（仅触屏，不挡交互）
     function setupTouchParticles() {
       const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
@@ -276,27 +284,49 @@
       // 与简历配色协调的彩色序列，沿轨迹循环 → 一窜彩色粒子
       const palette = ['#E24B4A', '#EF9F27', '#1D9E75', '#378ADD', '#7F77DD'];
       let colorIdx = 0;
-      let lastSpawn = 0;
+      let lastX = 0, lastY = 0;
 
       function spawn(x, y) {
-        const now = performance.now();
-        if (now - lastSpawn < 18) return; // 限频，避免粒子过多
-        lastSpawn = now;
+        // 软上限，避免极端情况下粒子过多卡顿
+        if (document.querySelectorAll('.touch-particle').length > 240) return;
+        const size = 7 + Math.random() * 7;        // 7~14px，大小不一更像粒子
+        const jx = (Math.random() - 0.5) * 14;      // 随机散布，形成"喷雾"感
+        const jy = (Math.random() - 0.5) * 14;
+        const color = palette[colorIdx % palette.length];
+        colorIdx++;
         const p = document.createElement('div');
         p.className = 'touch-particle';
-        p.style.left = x + 'px';
-        p.style.top = y + 'px';
-        p.style.background = palette[colorIdx % palette.length];
-        colorIdx++;
+        p.style.left = (x + jx - size / 2) + 'px';
+        p.style.top = (y + jy - size / 2) + 'px';
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.background = color;
+        p.style.boxShadow = '0 0 9px ' + color;     // 彩色辉光，更亮眼
         document.body.appendChild(p);
         p.addEventListener('animationend', () => p.remove());
       }
 
+      // 沿手指轨迹按距离插值补粒子：每移动约 7px 落一颗，快速滑动也连续成串
+      function trailTo(x, y) {
+        const dist = Math.hypot(x - lastX, y - lastY);
+        if (dist < 7) return;
+        const steps = Math.min(4, Math.floor(dist / 7));
+        for (let i = 1; i <= steps; i++) {
+          const ix = lastX + (x - lastX) * (i / steps);
+          const iy = lastY + (y - lastY) * (i / steps);
+          spawn(ix, iy);
+        }
+        lastX = x; lastY = y;
+      }
+
       window.addEventListener('touchstart', (e) => {
-        for (const t of e.touches) spawn(t.clientX, t.clientY);
+        for (const t of e.touches) {
+          lastX = t.clientX; lastY = t.clientY;
+          spawn(t.clientX, t.clientY);
+        }
       }, { passive: true });
       window.addEventListener('touchmove', (e) => {
-        for (const t of e.touches) spawn(t.clientX, t.clientY);
+        for (const t of e.touches) trailTo(t.clientX, t.clientY);
       }, { passive: true });
     }
 
