@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
   <style>
     .lightbox-overlay {
       display: none;
@@ -250,18 +250,19 @@
         const y = e.touches[0].clientY;
 
         if (pulling) {
-          const pull = y - pullStartY;
-          // 手指回退到起点之上，或已不在底部 → 立即释放，绝不拦截向上滑动
+          const pull = pullStartY - y;  // 手指继续上滑（还想往下翻）→ 正值
+          // 手指回退到起点以下，或已不在底部 → 立即释放，交还原生滚动
           if (pull <= 0 || !atBottom()) { cancel(); return; }
           rubber = Math.min(MAX, pull * COEF);
           page.style.transition = 'none';
-          page.style.transform = 'translateY(' + rubber + 'px)';
+          // 底部橡皮筋：内容随手指上移、底部露出版面底色（标准 overscroll 表现）
+          page.style.transform = 'translateY(' + (-rubber) + 'px)';
           if (e.cancelable) e.preventDefault();
           return;
         }
 
-        // 尚未拉伸：滚动过程中「动态到达底部」且「手指向下拉过阈值」才激活
-        if (atBottom() && (y - startY) > 6) {
+        // 尚未拉伸：滚动到「动态到达底部」且「手指向上滑（继续想往下翻）过阈值」才激活
+        if (atBottom() && (startY - y) > 6) {
           pulling = true;
           pullStartY = y;
           rubber = 0;
