@@ -616,6 +616,18 @@ a {
 }
 .back-to-top:active { transform: scale(0.92); }
 
+/* 手机端：按钮更克制（略小、更透明），且平时完全隐藏，仅到底部才浮现 */
+@media (hover: none) and (pointer: coarse) {
+  .back-to-top {
+    width: 40px;
+    height: 40px;
+    right: 18px;
+    bottom: 18px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+  .back-to-top svg { width: 16px; height: 16px; }
+}
+
 /* 2) 技能专长：鼠标悬浮变色 */
 .skill-row {
   padding: 4px 0;
@@ -624,6 +636,19 @@ a {
 .skill-row:hover .skill-fill { background: var(--red); }
 .skill-row:hover .skill-name,
 .skill-row:hover .skill-num { color: var(--red); }
+
+/* 教育标签：鼠标悬浮轻微放大 + 阴影（仅桌面 hover，移动端不触发） */
+.edu-tag {
+  display: inline-block;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+@media (hover: hover) {
+  .edu-tag:hover {
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: var(--black);
+  }
+}
 
 /* 3) 手机手指触碰微动效（仅触摸设备） */
 * { -webkit-tap-highlight-color: transparent; }
@@ -648,4 +673,51 @@ a {
     filter: brightness(0.94);
     transition: transform 0.1s ease, filter 0.1s ease;
   }
+}
+
+/* 手机端：手指拖出的彩色粒子尾迹（仅触屏；pointer-events:none 不挡滑动/点击） */
+@media (hover: none) and (pointer: coarse) {
+  .touch-particle {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    will-change: transform, opacity;
+    animation: tp-fade 0.6s ease-out forwards;
+  }
+  @keyframes tp-fade {
+    0%   { transform: scale(1);   opacity: 0.95; }
+    100% { transform: scale(0.1); opacity: 0; }
+  }
+}
+
+/* 获奖荣誉：淘宝式鼠标悬浮局部放大（仅桌面 hover 生效） */
+.award-zoom { position: relative; }
+.award-lens {
+  position: absolute;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.3);
+  display: none;
+  pointer-events: none;
+  z-index: 1000;
+}
+.award-zoom-result {
+  position: absolute;
+  top: 0;
+  left: 105%;
+  width: 260px;
+  border: 1px solid var(--gray-300);
+  background-color: #fff;
+  background-repeat: no-repeat;
+  display: none;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+@media (hover: none) {
+  .award-lens,
+  .award-zoom-result { display: none !important; }
 }

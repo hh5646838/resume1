@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=7">
   <style>
     .lightbox-overlay {
       display: none;
@@ -108,6 +108,8 @@
       setupSkillAnimation();
       setupBackToTop();
       setupRubberBand();
+      setupTouchParticles();
+      setupAwardZoom();
     }
 
     // 技能专长：滚动进入视口时进度条从 0 到目标、数字从 0 涨到目标
@@ -172,66 +174,187 @@
     function setupBackToTop() {
       const btn = document.getElementById('backToTop');
       if (!btn) return;
+      // 触屏设备（手机/平板）按方案 B：平时完全隐藏，仅滚动到页面底部那一屏才出现
+      const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+      const nearBottom = () => {
+        const doc = document.documentElement;
+        return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 80);
+      };
       const onScroll = () => {
-        if (window.scrollY > 400) btn.classList.add('show');
-        else btn.classList.remove('show');
+        if (isTouch) {
+          if (nearBottom()) btn.classList.add('show');
+          else btn.classList.remove('show');
+        } else {
+          // 桌面端：滚动超过 400px 即出现（维持原样）
+          if (window.scrollY > 400) btn.classList.add('show');
+          else btn.classList.remove('show');
+        }
       };
       window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
       onScroll();
       btn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
-    // 底部橡皮筋拉伸回弹（触屏在页面最底继续下拉时）
+    // 底部橡皮筋拉伸回弹（仅触屏，在页面最底继续下拉时）
     function setupRubberBand() {
       const page = document.getElementById('app');
       if (!page) return;
+      // 仅触屏设备启用，桌面完全不挂监听，避免任何干扰
+      if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
 
       let startY = 0;
-      let pulling = false;
+      let startAtBottom = false; // 手势起始时是否在底部（只认起点一次）
+      let pulling = false;       // 是否处于橡皮筋拉伸中
+      let released = false;      // 手指回退越过起点后释放，本段手势不再拦截
       let rubber = 0;
+      const MAX = 130;           // 最大拉伸像素，防止拉过头
 
       const atBottom = () => {
         const doc = document.documentElement;
-        return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 2);
+        return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 4);
       };
 
-      window.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        startY = e.touches[0].clientY;
-        pulling = false;
-        rubber = 0;
-      }, { passive: true });
-
-      window.addEventListener('touchmove', (e) => {
-        if (e.touches.length !== 1) return;
-        const delta = e.touches[0].clientY - startY;
-        // 仅在页面最底部且继续向下拉（手指下移）时触发橡皮筋
-        if (atBottom() && delta > 0) {
-          pulling = true;
-          rubber = delta * 0.38; // 阻力系数，拉伸手感更"韧"
-          page.style.transition = 'none';
-          page.style.transform = 'translateY(' + rubber + 'px)';
-          if (e.cancelable) e.preventDefault();
-        } else if (pulling) {
-          // 已处于拉伸中：手指回退时跟随收回，但不反向越过原位置
-          rubber = Math.max(0, delta) * 0.38;
-          page.style.transform = 'translateY(' + rubber + 'px)';
-          if (e.cancelable) e.preventDefault();
-        }
-      }, { passive: false });
-
-      window.addEventListener('touchend', () => {
+      function release() {
         if (!pulling) return;
         pulling = false;
-        // 弹性回弹：带轻微过冲的快速回弹
-        page.style.transition = 'transform 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        page.style.transition = 'transform 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
         page.style.transform = 'translateY(0)';
         setTimeout(() => {
           page.style.transition = '';
           page.style.transform = '';
-        }, 580);
+        }, 620);
+      }
+
+      function reset() {
+        if (pulling) release();
+        pulling = false;
+        released = false;
+        rubber = 0;
+        page.style.transition = '';
+        page.style.transform = '';
+      }
+
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        startY = e.touches[0].clientY;
+        startAtBottom = atBottom();
+        pulling = false;
+        released = false;
+        rubber = 0;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length !== 1 || released) return;
+        const delta = e.touches[0].clientY - startY;
+
+        // 非「起点在底部」或「手指向上（想上滑）」：完全交还原生滚动，绝不拦截
+        if (!startAtBottom || delta <= 0) {
+          if (pulling) { reset(); }
+          return;
+        }
+
+        // 到这里：起点在底部 + 向下拉 → 进入橡皮筋拉伸
+        pulling = true;
+        rubber = Math.min(MAX, delta * 0.4); // 阻力系数，手感更"韧"
+        page.style.transition = 'none';
+        page.style.transform = 'translateY(' + rubber + 'px)';
+        if (e.cancelable) e.preventDefault();
+      }, { passive: false });
+
+      // 结束与中断都兜底，避免 transform / pulling 残留导致页面卡死
+      window.addEventListener('touchend', release);
+      window.addEventListener('touchcancel', reset);
+    }
+
+    // 手机端：手指接触/滑动时，在触点留下一串彩色粒子拖尾（仅触屏，不挡交互）
+    function setupTouchParticles() {
+      const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+      if (!isTouch) return;
+      // 与简历配色协调的彩色序列，沿轨迹循环 → 一窜彩色粒子
+      const palette = ['#E24B4A', '#EF9F27', '#1D9E75', '#378ADD', '#7F77DD'];
+      let colorIdx = 0;
+      let lastSpawn = 0;
+
+      function spawn(x, y) {
+        const now = performance.now();
+        if (now - lastSpawn < 18) return; // 限频，避免粒子过多
+        lastSpawn = now;
+        const p = document.createElement('div');
+        p.className = 'touch-particle';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.background = palette[colorIdx % palette.length];
+        colorIdx++;
+        document.body.appendChild(p);
+        p.addEventListener('animationend', () => p.remove());
+      }
+
+      window.addEventListener('touchstart', (e) => {
+        for (const t of e.touches) spawn(t.clientX, t.clientY);
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        for (const t of e.touches) spawn(t.clientX, t.clientY);
+      }, { passive: true });
+    }
+
+    // 获奖荣誉：淘宝式悬浮局部放大（仅桌面 hover 生效，移动端不触发）
+    function setupAwardZoom() {
+      const isTouch = window.matchMedia('(hover: none)').matches;
+      if (isTouch) return;
+      const ZOOM = 2.5; // 放大倍数
+      const RESULT_W = 260; // 放大面板宽度
+
+      document.querySelectorAll('.award-zoom').forEach(z => {
+        const img = z.querySelector('img');
+        const lens = z.querySelector('.award-lens');
+        const result = z.querySelector('.award-zoom-result');
+        if (!img || !lens || !result) return;
+
+        function move(e) {
+          const rect = img.getBoundingClientRect();
+          const iw = img.clientWidth, ih = img.clientHeight;
+          if (!iw || !ih) return;
+          let x = Math.max(0, Math.min(e.clientX - rect.left, iw));
+          let y = Math.max(0, Math.min(e.clientY - rect.top, ih));
+
+          const lensW = iw / ZOOM, lensH = ih / ZOOM;
+          const lx = Math.max(0, Math.min(x - lensW / 2, iw - lensW));
+          const ly = Math.max(0, Math.min(y - lensH / 2, ih - lensH));
+
+          lens.style.width = lensW + 'px';
+          lens.style.height = lensH + 'px';
+          lens.style.left = lx + 'px';
+          lens.style.top = ly + 'px';
+
+          result.style.backgroundImage = `url('${img.src}')`;
+          result.style.backgroundSize = (iw * ZOOM) + 'px ' + (ih * ZOOM) + 'px';
+          result.style.backgroundPosition = `-${lx * ZOOM}px -${ly * ZOOM}px`;
+        }
+
+        z.addEventListener('mouseenter', () => {
+          const iw = img.clientWidth, ih = img.clientHeight;
+          if (!iw || !ih) return;
+          result.style.height = (RESULT_W * ih / iw) + 'px';
+          // 右侧空间不足则翻到左侧显示，避免溢出视口
+          const rect = z.getBoundingClientRect();
+          if (rect.right + RESULT_W + 16 > window.innerWidth) {
+            result.style.left = 'auto';
+            result.style.right = '105%';
+          } else {
+            result.style.left = '105%';
+            result.style.right = 'auto';
+          }
+          lens.style.display = 'block';
+          result.style.display = 'block';
+        });
+        z.addEventListener('mouseleave', () => {
+          lens.style.display = 'none';
+          result.style.display = 'none';
+        });
+        z.addEventListener('mousemove', move);
       });
     }
 
@@ -274,6 +397,11 @@
       return `<svg class="contact-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
     }
 
+    // 外链图标（与学术论文一致的「跳出」箭头）
+    function getExternalIcon() {
+      return `<svg class="inline-block ml-1 align-middle opacity-60" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+    }
+
     function renderPortals(portals) {
       return `
         <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
@@ -293,7 +421,7 @@
 
     function renderEducation(edu) {
       const eduName = edu.link
-        ? `<a href="${edu.link}" target="_blank" rel="noopener noreferrer" class="edu-link hover:text-red transition-colors">${edu.nameCn}</a>`
+        ? `<a href="${edu.link}" target="_blank" rel="noopener noreferrer" class="edu-link hover:text-red transition-colors">${edu.nameCn}${getExternalIcon()}</a>`
         : edu.nameCn;
       return `
         <section class="max-w-6xl px-8 py-16" style="margin-left:auto;margin-right:auto;">
@@ -306,7 +434,7 @@
                 <p class="text-sm italic mb-1">${edu.nameEn}</p>
                 <p class="text-xs text-gray-500 mb-3">${edu.description}</p>
                 <div class="flex gap-2">
-                  ${edu.tags.map(t => `<span class="px-2 py-1 border border-gray-300 text-xs">${t}</span>`).join('')}
+                  ${edu.tags.map(t => `<span class="edu-tag px-2 py-1 border border-gray-300 text-xs">${t}</span>`).join('')}
                 </div>
               </div>
             </div>
@@ -379,11 +507,11 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             ${awards.map(a => `
               <div class="relative">
-                ${a.image ? `
+                <div class="award-zoom">
                   <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover award-clickable" onclick="openLightbox('${a.image}', '${a.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">
-                ` : `
-                  <img src="${a.image}" alt="${a.name}" class="bw-img w-full ${a.aspect === 'square' ? 'aspect-square' : 'aspect-[4/5]'} object-cover">
-                `}
+                  <div class="award-lens"></div>
+                  <div class="award-zoom-result"></div>
+                </div>
                 <span class="award-badge">${a.badge}</span>
                 <p class="text-xs mt-3 text-center font-medium">${a.name}</p>
               </div>
@@ -394,7 +522,7 @@
     }
 
     function renderPapers(papers) {
-      const externalIcon = `<svg class="inline-block ml-1 align-middle opacity-60" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+      const externalIcon = getExternalIcon();
       return `
         <section class="max-w-6xl px-8 py-12" style="margin-left:auto;margin-right:auto;">
           <p class="section-label mb-8">Publications <span class="text-gray-400 font-normal normal-case tracking-normal lowercase ml-1">学术论文</span></p>
