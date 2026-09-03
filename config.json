@@ -91,5 +91,9 @@
     "wechat": "mwrsxtn9imagine",
     "address": "成都",
     "copyright": "© 2026 Yongjie Liu. All rights reserved."
+  },
+  "rubberBand": {
+    "pullText": "✨ 到宇宙边缘啦 ✨",
+    "releaseText": "↑ 松手回顶"
   }
 }

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人简历与作品集</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=12">
   <style>
     .lightbox-overlay {
       display: none;
@@ -56,16 +56,28 @@
 <body>
   <div id="app"></div>
 
+  <!-- 底部橡皮筋拉伸时随拉力增强的辉光（不挡交互） -->
+  <div id="rubberGlow" class="rubber-glow">
+    <div id="rubberHint" class="rubber-hint">
+      <span id="rubberArrow" class="rubber-arrow">↓</span>
+      <span id="rubberText" class="rubber-text">继续下拉</span>
+    </div>
+  </div>
+
   <button id="backToTop" class="back-to-top" aria-label="回到文首">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 14 12 8 18 14"></polyline></svg>
   </button>
 
   <script>
     // 加载配置数据并渲染页面
+    // 模块级配置引用，供交互函数（如橡皮筋文案）读取 JSON 中的可配置项
+    let appConfig = null;
+
     async function init() {
       try {
-        const response = await fetch('config.json?v=3');
+        const response = await fetch('config.json?v=4');
         const config = await response.json();
+        appConfig = config;
         if (config.site && config.site.title) {
           document.title = config.site.title;
         }
@@ -202,6 +214,10 @@
     function setupRubberBand() {
       const page = document.getElementById('app');
       if (!page) return;
+      const glow = document.getElementById('rubberGlow'); // 底部随拉伸增强的辉光
+      const hint = document.getElementById('rubberHint');   // 露白区文字/表情提示
+      const arrow = document.getElementById('rubberArrow');
+      const hintText = document.getElementById('rubberText');
       // 仅触屏设备启用，桌面完全不挂监听，避免任何干扰
       if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
 
@@ -217,10 +233,29 @@
         return (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 4);
       };
 
+      // 露白区提示文案从 JSON 读取（rubberBand.pullText / releaseText），未配置则用默认值
+      const rbCfg = (appConfig && appConfig.rubberBand) || {};
+      const PULL_TEXT = rbCfg.pullText || '继续下拉';
+      const RELEASE_TEXT = rbCfg.releaseText || '松手回顶';
+
+      // 露白区提示随拉伸更新：文字/表情 + 透明度
+      function updateHint() {
+        if (!glow || !hint) return;
+        const ratio = Math.min(1, rubber / MAX);
+        glow.style.opacity = ratio.toFixed(3);
+        hint.style.opacity = Math.min(1, ratio * 1.6).toFixed(3); // 比辉光更早显形
+        // 拉伸过猛则切换为「松手回顶」语义（箭头翻转 + 文案变化）
+        const full = rubber >= MAX * 0.82;
+        arrow.textContent = full ? '↑' : '↓';
+        hintText.textContent = full ? RELEASE_TEXT : PULL_TEXT;
+      }
+
       // 松手回弹：带轻微过冲的弹性曲线，快速弹回
       function snapBack() {
         if (!pulling) return;
         pulling = false;
+        if (glow) glow.style.opacity = '0';
+        if (hint) hint.style.opacity = '0';
         page.style.transition = 'transform 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3)';
         page.style.transform = 'translateY(0)';
         setTimeout(() => {
@@ -233,6 +268,8 @@
       function cancel() {
         if (!pulling) return;
         pulling = false;
+        if (glow) glow.style.opacity = '0';
+        if (hint) hint.style.opacity = '0';
         page.style.transition = 'none';
         page.style.transform = '';
       }
@@ -257,6 +294,7 @@
           page.style.transition = 'none';
           // 底部橡皮筋：内容随手指上移、底部露出版面底色（标准 overscroll 表现）
           page.style.transform = 'translateY(' + (-rubber) + 'px)';
+          updateHint(); // 拉得越多辉光越强、提示越清晰
           if (e.cancelable) e.preventDefault();
           return;
         }
@@ -278,7 +316,6 @@
     }
 
     // 手机端：手指接触/滑动时，在触点留下一串彩色粒子拖尾（仅触屏，不挡交互）
-    // 手机端：手指接触/滑动时，在触点留下一串彩色粒子拖尾（仅触屏，不挡交互）
     function setupTouchParticles() {
       const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
       if (!isTouch) return;
@@ -290,19 +327,25 @@
       function spawn(x, y) {
         // 软上限，避免极端情况下粒子过多卡顿
         if (document.querySelectorAll('.touch-particle').length > 240) return;
-        const size = 7 + Math.random() * 7;        // 7~14px，大小不一更像粒子
-        const jx = (Math.random() - 0.5) * 14;      // 随机散布，形成"喷雾"感
+        const isHeart = Math.random() < 0.3;                                  // 约 30% 是小爱心
+        const size = isHeart ? (9 + Math.random() * 6) : (4 + Math.random() * 5); // 圆点 4~9px、爱心 9~15px（更小颗）
+        const jx = (Math.random() - 0.5) * 14;                                // 随机散布，形成"喷雾"感
         const jy = (Math.random() - 0.5) * 14;
         const color = palette[colorIdx % palette.length];
         colorIdx++;
         const p = document.createElement('div');
-        p.className = 'touch-particle';
+        p.className = 'touch-particle' + (isHeart ? ' heart' : '');
         p.style.left = (x + jx - size / 2) + 'px';
         p.style.top = (y + jy - size / 2) + 'px';
         p.style.width = size + 'px';
         p.style.height = size + 'px';
-        p.style.background = color;
-        p.style.boxShadow = '0 0 9px ' + color;     // 彩色辉光，更亮眼
+        if (isHeart) {
+          // 爱心用 SVG 绘制（填充当前色 + 同色辉光），随父级缩放淡出
+          p.innerHTML = '<svg viewBox="0 0 32 29.6" width="' + size + '" height="' + size + '" fill="' + color + '" style="display:block;filter:drop-shadow(0 0 5px ' + color + ')"><path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/></svg>';
+        } else {
+          p.style.background = color;
+          p.style.boxShadow = '0 0 8px ' + color;     // 圆点彩色辉光
+        }
         document.body.appendChild(p);
         p.addEventListener('animationend', () => p.remove());
       }
