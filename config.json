@@ -16,7 +16,7 @@
     ]
   },
   "portals": [
-    { "name": "个人站", "en": "Portfolio Site", "url": "https://home.jojocharm.top", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787308174/Weixin_Image_20260821182550_2638_2.jpg" },
+    { "name": "个人站", "en": "Portfolio Site", "url": "https://home.jojocharm.top", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1788367007/0f3cc650-099b-4e4e-8a48-2b53ca967dc2.png" },
     { "name": "轻量工具站", "en": "AI Tools", "url": "http://jojocharm.top", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787053936/samples/waves.png" },
     { "name": "摄影站", "en": "Photography", "url": "https://photography.jojocharm.top", "image": "https://res.cloudinary.com/vljhnkvn/image/upload/f_auto,q_auto/v1787053936/samples/zoom.avif" }
   ],
